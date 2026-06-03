@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>浙江大学国旗仪仗队 - 图片存储与展示平台</title>
+  <link rel="stylesheet" href="./styles.css">
+  <style>
+    /* SVG 图标替代 Font Awesome - 完全离线可用 */
+    .icon {
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      vertical-align: -0.125em;
+      fill: currentColor;
+    }
+    .icon-lg { font-size: 1.33333em; }
+    .icon-2x { font-size: 2em; }
+    .icon-3x { font-size: 3em; }
+  </style>
+</head>
+<body>
+  <!-- 导航栏 -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-logo">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        <span>浙江大学国旗仪仗队</span>
+      </a>
+      <div class="nav-links">
+        <a href="#home" class="nav-link active">首页</a>
+        <a href="#gallery" class="nav-link">图库</a>
+        <a href="#about" class="nav-link">关于</a>
+        <a href="#contact" class="nav-link">联系我们</a>
+      </div>
+      <button class="nav-toggle" id="navToggle">
+        <svg class="icon" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- 首页横幅 -->
+  <section id="home" class="hero">
+    <div class="hero-content">
+      <h1 class="hero-title">浙江大学国旗仪仗队</h1>
+      <p class="hero-subtitle">图片存储与展示平台</p>
+      <p class="hero-description">记录每一次升旗的庄严时刻，保存每一份训练的汗水与荣耀</p>
+      <div class="hero-buttons">
+        <a href="#gallery" class="btn btn-primary">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          浏览图库
+        </a>
+        <a href="#about" class="btn btn-secondary">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          了解更多
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 统计数据 -->
+  <section class="stats">
+    <div class="stats-container">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <div class="stat-number" id="imageCount">1,234</div>
+        <div class="stat-label">精选图片</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="stat-number" id="userCount">56</div>
+        <div class="stat-label">注册用户</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
+        <div class="stat-number" id="downloadCount">8,901</div>
+        <div class="stat-label">下载次数</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 三维度分类 -->
+  <section class="categories">
+    <div class="categories-container">
+      <h2 class="section-title">三维度分类浏览</h2>
+      <p class="section-subtitle">按时间、事件、地点三个维度探索我们的图片库</p>
+      
+      <div class="category-grid">
+        <!-- 时间维度 -->
+        <div class="category-card">
+          <div class="category-header">
+            <div class="category-icon time">
+              <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <h3>时间维度</h3>
+          </div>
+          <p class="category-desc">按年份浏览，从1997年队史开始</p>
+          <div class="category-tags" id="yearTags">
+            <span class="tag tag-time">2024</span>
+            <span class="tag tag-time">2023</span>
+            <span class="tag tag-time">2022</span>
+            <span class="tag tag-time">2021</span>
+            <span class="tag tag-time">2020</span>
+            <span class="tag tag-more">更多...</span>
+          </div>
+        </div>
+
+        <!-- 事件维度 -->
+        <div class="category-card">
+          <div class="category-header">
+            <div class="category-icon event">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+            </div>
+            <h3>事件维度</h3>
+          </div>
+          <p class="category-desc">按活动类型分类浏览</p>
+          <div class="category-tags" id="eventTags">
+            <span class="tag tag-event">训练日常</span>
+            <span class="tag tag-event">升旗仪式</span>
+            <span class="tag tag-event">重大活动</span>
+            <span class="tag tag-event">团队建设</span>
+            <span class="tag tag-event">荣誉时刻</span>
+          </div>
+        </div>
+
+        <!-- 地点维度 -->
+        <div class="category-card">
+          <div class="category-header">
+            <div class="category-icon location">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <h3>地点维度</h3>
+          </div>
+          <p class="category-desc">按校区和活动地点浏览</p>
+          <div class="category-tags" id="locationTags">
+            <span class="tag tag-location">紫金港校区</span>
+            <span class="tag tag-location">玉泉校区</span>
+            <span class="tag tag-location">西溪校区</span>
+            <span class="tag tag-location">之江校区</span>
+            <span class="tag tag-location">校外活动</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 图片库 -->
+  <section id="gallery" class="gallery">
+    <div class="gallery-container">
+      <div class="gallery-header">
+        <h2 class="section-title">图片库</h2>
+        <div class="gallery-controls">
+          <div class="search-box">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="searchInput" placeholder="搜索图片标题、描述...">
+          </div>
+          <button class="filter-btn" id="filterBtn">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            筛选
+            <span class="filter-count" id="filterCount">0</span>
+          </button>
+          <div class="view-toggle">
+            <button class="view-btn active" data-view="grid">
+              <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </button>
+            <button class="view-btn" data-view="list">
+              <svg class="icon" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 筛选面板 -->
+      <div class="filter-panel" id="filterPanel">
+        <div class="filter-section">
+          <h4><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 时间维度</h4>
+          <div class="filter-options" id="filterYears">
+            <button class="filter-option active" data-value="">全部年份</button>
+            <button class="filter-option" data-value="2024">2024</button>
+            <button class="filter-option" data-value="2023">2023</button>
+            <button class="filter-option" data-value="2022">2022</button>
+            <button class="filter-option" data-value="2021">2021</button>
+            <button class="filter-option" data-value="2020">2020</button>
+            <select class="filter-select">
+              <option value="">更多年份</option>
+              <option value="2019">2019</option>
+              <option value="2018">2018</option>
+              <option value="2017">2017</option>
+              <option value="2016">2016</option>
+              <option value="2015">2015</option>
+            </select>
+          </div>
+        </div>
+        <div class="filter-section">
+          <h4><svg class="icon" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> 事件维度</h4>
+          <div class="filter-options" id="filterEvents">
+            <button class="filter-option active" data-value="">全部事件</button>
+            <button class="filter-option" data-value="训练日常">训练日常</button>
+            <button class="filter-option" data-value="升旗仪式">升旗仪式</button>
+            <button class="filter-option" data-value="重大活动">重大活动</button>
+            <button class="filter-option" data-value="团队建设">团队建设</button>
+            <button class="filter-option" data-value="荣誉时刻">荣誉时刻</button>
+          </div>
+        </div>
+        <div class="filter-section">
+          <h4><svg class="icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> 地点维度</h4>
+          <div class="filter-options" id="filterLocations">
+            <button class="filter-option active" data-value="">全部地点</button>
+            <button class="filter-option" data-value="紫金港校区">紫金港校区</button>
+            <button class="filter-option" data-value="玉泉校区">玉泉校区</button>
+            <button class="filter-option" data-value="西溪校区">西溪校区</button>
+            <button class="filter-option" data-value="之江校区">之江校区</button>
+            <button class="filter-option" data-value="校外活动">校外活动</button>
+          </div>
+        </div>
+        <div class="filter-footer">
+          <div class="sort-select">
+            <label>排序:</label>
+            <select id="sortSelect">
+              <option value="newest">最新上传</option>
+              <option value="oldest">最早上传</option>
+              <option value="popular">最受欢迎</option>
+            </select>
+          </div>
+          <button class="clear-btn" id="clearFilters">
+            <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            清除所有筛选
+          </button>
+        </div>
+      </div>
+
+      <!-- 当前筛选标签 -->
+      <div class="active-filters" id="activeFilters">
+        <span class="active-filters-label">当前筛选:</span>
+      </div>
+
+      <!-- 图片网格 -->
+      <div class="image-grid" id="imageGrid">
+        <!-- 图片将通过 JavaScript 动态加载 -->
+      </div>
+
+      <!-- 加载更多 -->
+      <div class="load-more">
+        <button class="btn btn-outline" id="loadMoreBtn">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+          加载更多
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 关于我们 -->
+  <section id="about" class="about">
+    <div class="about-container">
+      <h2 class="section-title">关于我们</h2>
+      <div class="about-content">
+        <div class="about-text">
+          <p>浙江大学国旗仪仗队成立于1997年，是一支由在校大学生组成的国旗护卫队伍。我们承担着学校日常升旗任务以及重大活动的仪仗任务。</p>
+          <p>多年来，国旗仪仗队始终秉承"爱国、荣校、奉献、进取"的精神，以严谨的作风、规范的动作、昂扬的精神风貌，展现了浙大学子的风采。</p>
+          <p>本平台旨在记录和展示国旗仪仗队的发展历程，保存珍贵的影像资料，传承仪仗精神。</p>
+        </div>
+        <div class="about-image">
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400' viewBox='0 0 600 400'%3E%3Crect fill='%23c41e3a' width='600' height='400'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='24' font-family='sans-serif'%3E国旗仪仗队%3C/text%3E%3C/svg%3E" alt="国旗仪仗队">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 联系我们 -->
+  <section id="contact" class="contact">
+    <div class="contact-container">
+      <h2 class="section-title">联系我们</h2>
+      <div class="contact-content">
+        <div class="contact-info">
+          <div class="contact-item">
+            <svg class="icon icon-2x" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <div>
+              <h4>所属单位</h4>
+              <p>浙江大学党委学生工作部</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <svg class="icon icon-2x" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <div>
+              <h4>地址</h4>
+              <p>浙江省杭州市西湖区余杭塘路866号</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <svg class="icon icon-2x" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <div>
+              <h4>邮箱</h4>
+              <p>flag-guard@zju.edu.cn</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          <span>浙江大学国旗仪仗队</span>
+        </div>
+        <div class="footer-links">
+          <a href="#home">首页</a>
+          <a href="#gallery">图库</a>
+          <a href="#about">关于</a>
+          <a href="#contact">联系</a>
+        </div>
+        <div class="footer-copyright">
+          <p>&copy; 2024 浙江大学国旗仪仗队. All rights reserved.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 图片详情模态框 -->
+  <div class="modal" id="imageModal">
+    <div class="modal-content">
+      <button class="modal-close" id="modalClose">
+        <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="modal-image">
+        <img id="modalImage" src="" alt="">
+      </div>
+      <div class="modal-info">
+        <h3 id="modalTitle"></h3>
+        <p id="modalDescription"></p>
+        <div class="modal-meta">
+          <span><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> <span id="modalYear"></span></span>
+          <span><svg class="icon" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> <span id="modalEvent"></span></span>
+          <span><svg class="icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> <span id="modalLocation"></span></span>
+        </div>
+        <div class="modal-stats">
+          <span><svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> <span id="modalViews"></span></span>
+          <span><svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> <span id="modalDownloads"></span></span>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="downloadBtn">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            下载图片
+          </button>
+          <button class="btn btn-outline" id="shareBtn">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            分享
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
