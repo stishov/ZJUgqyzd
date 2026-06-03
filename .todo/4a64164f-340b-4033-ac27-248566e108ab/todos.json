@@ -1,0 +1,38 @@
+[
+  {
+    "content": "修改 Upload 页面 - 添加上传/导入切换选项卡",
+    "id": "1",
+    "priority": "high",
+    "status": "in_progress"
+  },
+  {
+    "content": "实现图床导入 UI 界面（URL 输入框、批量导入）",
+    "id": "2",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "实现图片 URL 抓取和元信息获取功能",
+    "id": "3",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "实现导入图片的数据库记录创建",
+    "id": "4",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "添加错误处理和无效 URL 提示",
+    "id": "5",
+    "priority": "medium",
+    "status": "pending"
+  },
+  {
+    "content": "运行类型检查和测试",
+    "id": "6",
+    "priority": "medium",
+    "status": "pending"
+  }
+]

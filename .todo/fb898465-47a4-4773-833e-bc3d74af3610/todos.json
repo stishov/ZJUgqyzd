@@ -1,0 +1,44 @@
+[
+  {
+    "content": "检查现有数据库表结构",
+    "id": "1",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "更新管理员分类管理页面 - 支持动态增删改",
+    "id": "2",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "更新前端类型定义",
+    "id": "3",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "更新Gallery页面筛选功能",
+    "id": "4",
+    "priority": "high",
+    "status": "in_progress"
+  },
+  {
+    "content": "更新Upload页面分类选择",
+    "id": "5",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "更新Home页面分类展示",
+    "id": "6",
+    "priority": "medium",
+    "status": "pending"
+  },
+  {
+    "content": "测试验证功能",
+    "id": "7",
+    "priority": "medium",
+    "status": "pending"
+  }
+]

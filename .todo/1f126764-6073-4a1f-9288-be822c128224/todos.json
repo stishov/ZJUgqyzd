@@ -1,0 +1,32 @@
+[
+  {
+    "content": "检查 Gallery 页面图片渲染逻辑",
+    "id": "1",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "检查 ImageDetail 页面图片渲染逻辑",
+    "id": "2",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "检查数据库中图片URL存储情况",
+    "id": "3",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "修复外部图床图片显示问题",
+    "id": "4",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "验证修复结果",
+    "id": "5",
+    "priority": "medium",
+    "status": "completed"
+  }
+]
