@@ -1,0 +1,27 @@
+[
+  {
+    "content": "修改 ImageDetail.tsx - 移除 SafeImage 组件的外部 URL 验证逻辑",
+    "id": "1",
+    "status": "completed"
+  },
+  {
+    "content": "修改 ImageDetail.tsx - 移除 handleDownload 中的外部 URL fetch 逻辑",
+    "id": "2",
+    "status": "completed"
+  },
+  {
+    "content": "检查并修改 Upload.tsx - 移除外部图床导入功能",
+    "id": "3",
+    "status": "in_progress"
+  },
+  {
+    "content": "检查其他页面组件是否使用了 SafeImage 或外部 URL 逻辑",
+    "id": "4",
+    "status": "pending"
+  },
+  {
+    "content": "验证构建并测试",
+    "id": "5",
+    "status": "pending"
+  }
+]

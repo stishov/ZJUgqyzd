@@ -59,8 +59,12 @@ export default function Layout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">国</span>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden bg-white">
+                <img
+                  src="https://conversation.cdn.meoo.host/conversations/310379969543122944/image/2026-06-17/1781689756872-logo.jpg?auth_key=410ee3d0ef9304489d883f38a5574528b5a27209c0d0054a40ddce915faf7d46"
+                  alt="国旗仪仗队"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <span className="text-xl font-bold text-gray-900 dark:text-white hidden sm:block">
                 浙江大学国旗仪仗队
@@ -285,15 +289,19 @@ export default function Layout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">国</span>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden bg-white">
+                <img
+                  src="https://conversation.cdn.meoo.host/conversations/310379969543122944/image/2026-06-17/1781689756872-logo.jpg?auth_key=410ee3d0ef9304489d883f38a5574528b5a27209c0d0054a40ddce915faf7d46"
+                  alt="国旗仪仗队"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <span className="text-gray-700 dark:text-gray-300 font-medium">
                 浙江大学国旗仪仗队图片库
               </span>
             </div>
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              © 2024 浙江大学国旗仪仗队. 保留所有权利.
+              © 2026 浙江大学国旗仪仗队. 保留所有权利.
             </div>
           </div>
         </div>

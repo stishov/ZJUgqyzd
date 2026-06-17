@@ -1,0 +1,17 @@
+[
+  {
+    "content": "修改 Profile.tsx - 为待审核图片添加撤回按钮",
+    "id": "1",
+    "status": "completed"
+  },
+  {
+    "content": "实现撤回逻辑：删除Storage文件、images记录、释放存储空间",
+    "id": "2",
+    "status": "completed"
+  },
+  {
+    "content": "验证构建并测试",
+    "id": "3",
+    "status": "in_progress"
+  }
+]

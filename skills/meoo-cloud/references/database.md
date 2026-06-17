@@ -12,21 +12,24 @@
 - Supabase 默认限制每次查询 **1000 行**，大数据集需要分页
 - 所有表都需要启用 RLS，且 RLS 权限设计要与功能实现保持一致
 - 使用 UUID 作为 id，在实现功能代码时要注意字段格式与数据库字段类型一致
+- **禁止在数据库中存储 base64 编码内容**（图片、音频、附件等），会撑爆行大小并拖垮查询
+- **禁止在数据库中存储文件二进制数据**（bytea 大字段、文件内容等）；文件必须走 Storage 存储桶，表里只存 `storage_path` / `public_url` 等引用
 
 ## 约束和验证
 
 ### 使用触发器而非 CHECK 约束
+
 ```sql
 -- ✅ 推荐：验证触发器
 CREATE OR REPLACE FUNCTION validate_expire_at()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
+RETURNS TRIGGER LANGUAGE plpgsql AS \$\$
 BEGIN
   IF NEW.expire_at <= now() THEN
     RAISE EXCEPTION 'expire_at must be in the future';
   END IF;
   RETURN NEW;
 END;
-$$;
+\$\$;
 
 CREATE TRIGGER validate_expire_at_trigger
   BEFORE INSERT OR UPDATE ON bookings
@@ -54,6 +57,9 @@ CREATE POLICY anon_insert_posts ON posts FOR INSERT WITH CHECK (true);
 ```
 
 ### 用户数据策略（需要登录功能时）
+
+如果业务需求包含登录、注册、前端登录页、验证码登录、短信验证码、阿里云短信、忘记密码、重置密码、修改手机号、用户管理、管理后台、权限、角色或会员，请先回到 `references/authentication.md` 按 L1-L5 分级分类路由确认最终实现 SOP，再按 `basic_auth.md` 或 `meoo-cloud-auth` 对应子文档设计用户相关表与 RLS。
+
 ```sql
 -- 用户只能查看自己的数据
 CREATE POLICY users_select_own_data ON user_data
@@ -89,37 +95,10 @@ CREATE TABLE message_likes (
 CREATE POLICY anon_insert_message_likes ON message_likes FOR INSERT WITH CHECK (true);
 ```
 
-## 用户配置文件（需要登录功能时）
+## 用户配置文件(需要登录功能时）
 
-```sql
-CREATE TABLE public.profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  username TEXT UNIQUE NOT NULL,
-  avatar_url TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-
--- 自动创建配置文件的触发器
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
-AS $$
-BEGIN
-  INSERT INTO public.profiles (id, username, avatar_url)
-  VALUES (
-    NEW.id,
-    NEW.raw_user_meta_data ->> 'username',
-    NEW.raw_user_meta_data ->> 'avatar_url'
-  );
-  RETURN NEW;
-END;
-$$;
-
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-```
+认证相关的 `profiles` 表、`handle_new_user` 触发器、业务表用户外键、`user_roles` 角色权限表、`has_role` 函数等以 `references/authentication.md` 的共享用户数据模型为准；`basic_auth.md`、`auth-email-password.md` 和 `auth-sms-password.md` 只补充各自认证标识的写入规则。
+如果需求涉及找回密码、重置密码、修改手机号或验证码登录，先按 `references/authentication.md` 的 L1-L5 分级分类路由完成询问，再读取 `meoo-cloud-auth` 对应子文档；不能只按数据库表结构直接实现。
 
 ## 避免修改保留模式
 不要操作这些 Supabase 保留模式：
@@ -156,6 +135,30 @@ if (error) throw new Error(error.message);
 const { data } = await supabase.from('profiles').select();
 ```
 
+### 写操作必须校验影响行数（RLS 静默失败）
+
+**重要**：RLS 拦截 INSERT / UPDATE / DELETE 时，Supabase 客户端**不会抛错**，`error` 为 `null`，仅返回空数组。仅判断 `error` 会让前端误报"成功"——这是 RLS 策略问题最常见的隐性表现。
+
+```typescript
+// ❌ 错误：error 为 null 不代表写入成功，可能被 RLS 拦截
+const { error } = await supabase.from('posts').insert({ title: 'x' });
+if (error) throw new Error(error.message);
+toast.success('保存成功'); // 实际可能 0 行写入
+
+// ✅ 正确：用 .select() 拿回写入的行，长度为 0 视为失败
+const { data, error } = await supabase
+  .from('posts')
+  .insert({ title: 'x' })
+  .select();
+
+if (error) throw new Error(error.message);
+if (!data || data.length === 0) {
+  throw new Error('写入失败：可能被 RLS 策略拦截，请检查表的 INSERT 策略');
+}
+```
+
+UPDATE / DELETE 同理：必须 `.select()` 拿到受影响的行，长度为 0 时一律视为失败并提示用户。
+
 ## 常见问题
 
 ### RLS 策略必须匹配功能
@@ -173,9 +176,9 @@ FOR SELECT USING (
 -- ✅ 正确：使用 SECURITY DEFINER 函数
 CREATE FUNCTION public.has_role(_user_id UUID, _role TEXT)
 RETURNS BOOLEAN LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public
-AS $$
+AS \$\$
   SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role)
-$$;
+\$\$;
 
 CREATE POLICY admins_select_profiles ON profiles
 FOR SELECT USING (public.has_role(auth.uid(), 'admin'));

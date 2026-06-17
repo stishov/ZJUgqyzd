@@ -15,6 +15,7 @@ import {
   Heart,
   Download,
   Calendar,
+  Trash2,
 } from 'lucide-react';
 
 type ProfileType = Tables<'profiles'>;
@@ -42,6 +43,7 @@ export default function Profile() {
       fetchMyImages();
       fetchMyFavorites();
       fetchStats();
+      calculateStorageUsed();
     }
   }, [user, profile]);
 
@@ -89,6 +91,63 @@ export default function Profile() {
       favorites: favorites || 0,
       downloads: totalDownloads,
     });
+  }
+
+  // 计算用户实际使用的存储空间
+  async function calculateStorageUsed() {
+    if (!user) return 0;
+    const { data } = await supabase
+      .from('images')
+      .select('file_size')
+      .eq('user_id', user.id);
+
+    const totalSize = data?.reduce((sum, img) => sum + (img.file_size || 0), 0) || 0;
+
+    // 更新 profiles 表中的 storage_used
+    if (profile) {
+      await supabase
+        .from('profiles')
+        .update({ storage_used: totalSize })
+        .eq('id', user.id);
+    }
+
+    return totalSize;
+  }
+
+  // 撤回待审核的图片
+  async function handleWithdrawImage(image: ImageType) {
+    if (!confirm('确定要撤回这张待审核的图片吗？撤回后将删除图片和相关数据。')) {
+      return;
+    }
+
+    try {
+      // 1. 删除 Storage 中的文件
+      if (image.file_path) {
+        const path = image.file_path.split('/').pop();
+        if (path) {
+          await supabase.storage.from('images').remove([path]);
+        }
+      }
+
+      // 2. 减少用户的已用存储空间
+      if (image.file_size) {
+        await supabase.rpc('decrement_storage_used', {
+          p_user_id: user!.id,
+          p_bytes: image.file_size,
+        });
+      }
+
+      // 3. 删除 images 表记录
+      await supabase.from('images').delete().eq('id', image.id);
+
+      // 4. 刷新列表和统计数据
+      fetchMyImages();
+      fetchStats();
+      calculateStorageUsed();
+    } catch (error) {
+      console.error('撤回图片失败:', error);
+      alert('撤回失败，请重试');
+    }
   }
 
   async function handleSave() {
@@ -259,17 +318,40 @@ export default function Profile() {
                     myImages.length > 0 ? (
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                         {myImages.map((img) => (
-                          <a
-                            key={img.id}
-                            href={`/#/image/${img.id}`}
-                            className="aspect-square rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
-                          >
-                            <img
-                              src={img.thumbnail_path || img.file_path}
-                              alt={img.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </a>
+                          <div key={img.id} className="relative group aspect-square rounded-lg overflow-hidden">
+                            <a
+                              href={`/#/image/${img.id}`}
+                              className="block w-full h-full"
+                            >
+                              <img
+                                src={img.thumbnail_path || img.file_path}
+                                alt={img.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </a>
+
+                            {/* 待审核标记 */}
+                            {!img.is_approved && (
+                              <div className="absolute top-2 left-2 px-2 py-1 bg-yellow-500 text-white text-xs rounded font-medium">
+                                待审核
+                              </div>
+                            )}
+
+                            {/* 撤回按钮 - 仅对待审核图片显示 */}
+                            {!img.is_approved && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleWithdrawImage(img);
+                                }}
+                                className="absolute top-2 right-2 p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                title="撤回图片"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         ))}
                       </div>
                     ) : (

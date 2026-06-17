@@ -23,41 +23,11 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 
-// 图片URL验证和错误处理组件
+// 图片展示组件 - 仅支持 Meoo Cloud Storage
 function SafeImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
   const [error, setError] = useState(false);
 
-  // 验证是否为有效的图片URL
-  const isValidImageUrl = (url: string): boolean => {
-    if (!url) return false;
-    // 检查是否是数据URI
-    const isDataUri = url.startsWith('data:image/');
-    // 检查是否是有效的HTTP(S) URL
-    const isValidUrl = url.startsWith('http://') || url.startsWith('https://');
-    if (!isValidUrl && !isDataUri) return false;
-
-    // 数据URI直接通过
-    if (isDataUri) return true;
-
-    // 排除明显的非图片URL（网页路径）
-    const nonImagePatterns = /\.(html|htm|php|asp|jsp|json|xml|txt|js|css)(\?.*)?$/i;
-    if (nonImagePatterns.test(url)) return false;
-
-    // 排除以路径结尾的URL（如 /explore, /path）
-    // 但保留包含图片扩展名的URL
-    const hasImageExtension = /\.(jpg|jpeg|png|gif|webp|bmp|svg|ico)(\?.*)?$/i.test(url);
-
-    // 如果URL包含图片扩展名，直接通过
-    if (hasImageExtension) return true;
-
-    // 对于没有扩展名的URL（如图床链接），尝试加载
-    // 只要不是明显的非图片路径就允许
-    return true;
-  };
-
-  const validSrc = isValidImageUrl(src) ? src : '';
-
-  if (!validSrc || error) {
+  if (!src || error) {
     return (
       <div className={`${className} bg-gray-200 dark:bg-gray-700 flex items-center justify-center`}>
         <ImageIcon className="w-12 h-12 text-gray-400" />
@@ -67,7 +37,7 @@ function SafeImage({ src, alt, className }: { src: string; alt: string; classNam
 
   return (
     <img
-      src={validSrc}
+      src={src}
       alt={alt}
       className={className}
       onError={() => setError(true)}
@@ -94,7 +64,6 @@ export default function ImageDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [relatedImages, setRelatedImages] = useState<ImageDetail[]>([]);
   
@@ -106,6 +75,8 @@ export default function ImageDetail() {
   const [editYearId, setEditYearId] = useState<string>('');
   const [editLocationId, setEditLocationId] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
+  const [downloadStatus, setDownloadStatus] = useState<'idle' | 'downloading' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     if (id) {
@@ -187,17 +158,68 @@ export default function ImageDetail() {
 
   async function handleDownload() {
     if (!image) return;
-    
-    await supabase
-      .from('images')
-      .update({ download_count: (image.download_count || 0) + 1 })
-      .eq('id', image.id);
 
-    const link = document.createElement('a');
-    link.href = image.file_path;
-    link.download = image.file_name;
-    link.target = '_blank';
-    link.click();
+    setDownloadStatus('downloading');
+    setDownloadProgress(0);
+
+    try {
+      // 先更新下载次数
+      await supabase
+        .from('images')
+        .update({ download_count: (image.download_count || 0) + 1 })
+        .eq('id', image.id);
+
+      // 仅支持 Meoo Cloud Storage 下载
+      const urlParts = image.file_path.split('/sb-api/storage/v1/object/public/');
+      if (urlParts.length !== 2) {
+        throw new Error('不支持的图片来源，请使用 Meoo Cloud Storage 上传的图片');
+      }
+
+      const [bucketAndPath] = urlParts[1].split('/');
+      const filePath = urlParts[1].substring(bucketAndPath.length + 1);
+
+      const { data, error } = await supabase.storage
+        .from(bucketAndPath)
+        .download(filePath);
+
+      if (error) {
+        throw new Error(`下载失败: ${error.message}`);
+      }
+
+      if (!data) {
+        throw new Error('下载数据为空');
+      }
+
+      // 创建下载链接
+      const url = window.URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = image.file_name || `image_${image.id}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+
+      // 清理
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      setDownloadStatus('success');
+      setDownloadProgress(100);
+
+      // 3秒后重置状态
+      setTimeout(() => {
+        setDownloadStatus('idle');
+        setDownloadProgress(null);
+      }, 3000);
+    } catch (error) {
+      console.error('Download error:', error);
+      setDownloadStatus('error');
+      setDownloadProgress(null);
+
+      // 3秒后重置状态
+      setTimeout(() => {
+        setDownloadStatus('idle');
+      }, 3000);
+    }
   }
 
   async function handleDelete() {
@@ -303,23 +325,22 @@ export default function ImageDetail() {
     }
   }
 
-  function handleShare(platform: string) {
-    const url = window.location.href;
-    const text = `查看这张图片: ${image?.title}`;
-    
-    switch (platform) {
-      case 'wechat':
-        alert('请复制链接分享到微信: ' + url);
-        break;
-      case 'weibo':
-        window.open(`https://service.weibo.com/share/share.php?url=${encodeURIComponent(url)}&title=${encodeURIComponent(text)}`);
-        break;
-      case 'copy':
-        navigator.clipboard.writeText(url);
-        alert('链接已复制到剪贴板');
-        break;
+  async function handleCopyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      // 显示简洁提示
+      const btn = document.getElementById('copy-link-btn');
+      if (btn) {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><polyline points="20 6 9 17 4 12"></polyline></svg>已复制';
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('复制失败:', error);
+      alert('复制失败，请手动复制链接');
     }
-    setShowShareModal(false);
   }
 
   function formatFileSize(bytes: number) {
@@ -465,17 +486,51 @@ export default function ImageDetail() {
                 </button>
                 <button
                   onClick={handleDownload}
-                  className="flex-1 flex items-center justify-center px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  disabled={downloadStatus === 'downloading'}
+                  className={`flex-1 flex items-center justify-center px-4 py-3 rounded-xl font-medium transition-colors relative overflow-hidden ${
+                    downloadStatus === 'success'
+                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      : downloadStatus === 'error'
+                      ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  }`}
                 >
-                  <Download className="w-5 h-5 mr-2" />
-                  下载
+                  {downloadStatus === 'downloading' ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                      {downloadProgress !== null ? `${downloadProgress}%` : '下载中...'}
+                      {/* 进度条背景 */}
+                      {downloadProgress !== null && (
+                        <div
+                          className="absolute bottom-0 left-0 h-1 bg-current opacity-30 transition-all duration-300"
+                          style={{ width: `${downloadProgress}%` }}
+                        />
+                      )}
+                    </>
+                  ) : downloadStatus === 'success' ? (
+                    <>
+                      <Check className="w-5 h-5 mr-2" />
+                      下载成功
+                    </>
+                  ) : downloadStatus === 'error' ? (
+                    <>
+                      <X className="w-5 h-5 mr-2" />
+                      下载失败
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-5 h-5 mr-2" />
+                      下载
+                    </>
+                  )}
                 </button>
                 <button
-                  onClick={() => setShowShareModal(true)}
+                  id="copy-link-btn"
+                  onClick={handleCopyLink}
                   className="flex-1 flex items-center justify-center px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
                   <Share2 className="w-5 h-5 mr-2" />
-                  分享
+                  复制链接
                 </button>
               </div>
 
@@ -532,43 +587,6 @@ export default function ImageDetail() {
         </div>
       )}
 
-      {showShareModal && (
-        <div
-          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-          onClick={() => setShowShareModal(false)}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              分享图片
-            </h3>
-            <div className="space-y-3">
-              <button
-                onClick={() => handleShare('wechat')}
-                className="w-full flex items-center justify-center px-4 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors"
-              >
-                分享到微信
-              </button>
-              <button
-                onClick={() => handleShare('weibo')}
-                className="w-full flex items-center justify-center px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
-              >
-                分享到微博
-              </button>
-              <button
-                onClick={() => handleShare('copy')}
-                className="w-full flex items-center justify-center px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              >
-                复制链接
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
 
       {showEditModal && (
         <div

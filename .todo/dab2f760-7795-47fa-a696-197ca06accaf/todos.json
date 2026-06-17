@@ -1,0 +1,14 @@
+[
+  {
+    "id": "1",
+    "status": "completed",
+    "content": "在 AuthContext 中添加管理员账号自动初始化逻辑",
+    "priority": "high"
+  },
+  {
+    "id": "2",
+    "status": "completed",
+    "content": "验证管理员账号自动创建功能",
+    "priority": "medium"
+  }
+]

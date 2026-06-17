@@ -13,10 +13,8 @@ import {
   Image as ImageIcon,
   Eye,
   Tag,
-  ExternalLink,
   Copy,
   Database,
-  Globe,
 } from 'lucide-react';
 
 type ImageType = Tables<'images'>;
@@ -75,6 +73,14 @@ export default function AdminImages() {
       if (path) {
         await supabase.storage.from('images').remove([path]);
       }
+    }
+
+    // 减少用户的已用存储空间
+    if (image.user_id && image.file_size) {
+      await supabase.rpc('decrement_storage_used', {
+        p_user_id: image.user_id,
+        p_bytes: image.file_size,
+      });
     }
 
     await supabase.from('images').delete().eq('id', image.id);
@@ -194,25 +200,11 @@ export default function AdminImages() {
                     )}
                   </div>
 
-                  {/* 存储来源信息 */}
+                  {/* 存储路径信息 */}
                   <div className="mb-3 px-2 py-1.5 bg-gray-100 dark:bg-gray-600/50 rounded-lg">
                     <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mb-1">
-                      {image.source_type === 'supabase_storage' ? (
-                        <Database className="w-3 h-3" />
-                      ) : (
-                        <Globe className="w-3 h-3" />
-                      )}
-                      <span className="font-medium">
-                        {image.source_type === 'supabase_storage' && 'Supabase 存储'}
-                        {image.source_type === 'github_pages' && 'GitHub Pages'}
-                        {image.source_type === 'imgur' && 'Imgur'}
-                        {image.source_type === 'smms' && 'SM.MS'}
-                        {image.source_type === 'alicdn' && '阿里 CDN'}
-                        {image.source_type === 'wechat' && '微信图床'}
-                        {image.source_type === 'qq' && 'QQ 图床'}
-                        {image.source_type === 'sina' && '新浪图床'}
-                        {image.source_type === 'external' && '外部链接'}
-                      </span>
+                      <Database className="w-3 h-3" />
+                      <span className="font-medium">Meoo Cloud Storage</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <input
@@ -231,15 +223,6 @@ export default function AdminImages() {
                       >
                         <Copy className="w-3 h-3" />
                       </button>
-                      <a
-                        href={image.file_path}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400"
-                        title="在新窗口打开"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
                     </div>
                   </div>
 

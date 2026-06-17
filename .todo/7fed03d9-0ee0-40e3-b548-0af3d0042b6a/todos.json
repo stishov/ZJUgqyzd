@@ -1,0 +1,17 @@
+[
+  {
+    "content": "简化 ImageDetail 分享功能 - 移除分享模态框，直接复制链接",
+    "id": "1",
+    "status": "completed"
+  },
+  {
+    "content": "为 Gallery 页面添加复制链接功能",
+    "id": "2",
+    "status": "completed"
+  },
+  {
+    "content": "验证构建并测试",
+    "id": "3",
+    "status": "completed"
+  }
+]

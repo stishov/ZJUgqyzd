@@ -2,16 +2,30 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-import { User, Lock, AlertCircle, Eye, EyeOff, Eye as GuestIcon } from 'lucide-react';
+import { supabase } from '../supabase/client';
+import { User, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { signIn, guestLogin } = useAuth();
+  const { signIn } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  async function checkUserExists(username: string): Promise<boolean> {
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .maybeSingle();
+      return !!data;
+    } catch {
+      return false;
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -19,9 +33,17 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const { error } = await signIn(username, password);
-      if (error) {
-        setError('用户名或密码错误');
+      const result = await signIn(username, password);
+
+      if (result.error) {
+        // 检查用户是否存在
+        const userExists = await checkUserExists(username);
+
+        if (!userExists) {
+          setError('该用户不存在，请先注册');
+        } else {
+          setError('用户名或密码错误');
+        }
       } else {
         navigate('/');
       }
@@ -30,11 +52,6 @@ export default function Login() {
     } finally {
       setIsLoading(false);
     }
-  }
-
-  function handleGuestLogin() {
-    guestLogin();
-    navigate('/');
   }
 
   return (
@@ -114,27 +131,6 @@ export default function Login() {
               {isLoading ? '登录中...' : '登录'}
             </button>
           </form>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">或者</span>
-            </div>
-          </div>
-
-          <button
-            onClick={handleGuestLogin}
-            className="w-full flex items-center justify-center px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-          >
-            <GuestIcon className="w-5 h-5 mr-2" />
-            游客模式浏览
-          </button>
-
-          <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-            游客模式只能浏览图片，无法上传或收藏
-          </p>
 
           <div className="mt-6 text-center">
             <p className="text-gray-600 dark:text-gray-400">

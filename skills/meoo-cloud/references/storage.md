@@ -11,6 +11,7 @@ VALUES ('avatars', 'avatars', true);
 
 ## 关键上传方法
 
+
 **必须使用 ArrayBuffer**（通过 `base64-arraybuffer`）进行所有文件上传。使用 `Blob`、`File` 或 `FormData` 会导致 `400 InvalidRequest "No content provided"` 错误。
 **注意**：必须通过友好的 Toast 交互提醒用户数据操作结果，特别是操作失败的情况。
 **重要约束：必须在前端上传文件。禁止在云函数（Edge Functions）中上传文件**，因为云函数上传的文件无法获取公网访问 URL，会导致前端无法正常访问和显示文件。所有文件上传操作必须在前端（浏览器环境）中进行。
@@ -56,6 +57,9 @@ await supabase.storage.from('bucket').upload('path', blob);     // ❌
 await supabase.storage.from('bucket').upload('path', file);     // ❌
 ```
 
+
+
+
 ## 存储 RLS 策略
 
 ```sql
@@ -72,7 +76,10 @@ FOR INSERT WITH CHECK (
 
 ## Edge Functions 存储限制
 
+
 **重要**：存储操作应在前端执行，而非 Edge Functions。Edge Functions 使用私有网络 URL，无法提供文件的公开访问。
+
+
 
 ## 存储模式限制
 

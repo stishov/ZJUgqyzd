@@ -1,80 +1,121 @@
-# 用户认证
+# 用户认证路由
 
-> 仅在用户明确要求登录功能时才实现认证。默认设计应支持匿名访问。
+本文件负责注册登录类型路由、阻塞询问和共享用户数据基线。命中具体类型后，立即读取对应子文档作为 Auth API / 页面 / 云函数 / 测试用户的唯一实现 SOP；`profiles` 基础表、业务表外键和角色权限表以本文为准。
 
-## 认证方法
 
-### 用户名登录（默认方式）
-**这是 Meoo 项目的标准登录方式**，用户使用用户名登录，要自动生成 `{username}@meoo.local` 虚拟邮箱以兼容 Supabase 认证系统。
 
-### 手机号登录
-使用手机号作为用户名，同样自动生成 `{username}@meoo.local` 虚拟邮箱。
 
-### 邮箱登录
-仅在用户明确要求使用真实邮箱时才使用的标准邮箱/密码认证。
+## Web/H5 路由
 
-## ❌ 不支持的登录方式
+开始数据库设计之前，必须先完成本节的分级分类路由和最终实现 SOP 确认。不得先读取 `basic_auth.md` 或根据“用户名登录（默认方式）”生成任何数据库、RLS、Auth API、页面或云函数代码。
 
-以下登录方式 **不支持**，如果用户要求请明确告知无法实现：
+### 分级分类路由
 
-- **手机验证码登录**：不支持短信验证码
-- **第三方登录**：不支持微信、QQ、支付宝、GitHub 等第三方登录
-- **扫码登录**：不支持二维码扫码登录
-- **指纹/面部识别**：不支持生物识别登录
-- **无密码登录**：不支持魔法链接等无密码方式
+按 L1 到 L5 自上而下判定；命中即停止，不继续向下归类。长需求中先抽取认证相关子句做本节判定；其他业务功能不降低注册登录澄清优先级。一个需求同时包含基础登录和更高优先级能力时，以更高优先级能力为准。
 
-**如果用户要求以上登录方式，请明确说明 Meoo Cloud 目前仅支持用户名/密码的登录方式。**
+#### L1：邮箱找回 / 邮箱确认 / 邮箱验证码
 
-## 实现要点
+命中条件：
 
-### 1. 存储完整会话对象
-```typescript
-const [session, setSession] = useState<Session | null>(null);
+- `邮箱 / 邮件 / email` + `忘记密码 / 找回密码 / 邮箱找回 / 重置密码`。
+- `邮箱验证码 / 邮件验证码 / 邮箱验证 / 邮箱确认 / 注册邮箱校验`。
+- `邮箱登录二次校验 / 邮箱 + 密码 + 验证码`。
+
+路由结果：设置 `authImplementationSop=auth_email_password`，读取 `skills/meoo-cloud-auth/references/auth-email-password.md`；本路线完全取代基础虚拟邮箱方案，不得再读取 `basic_auth.md` 作为基础实现。
+
+Short cases:
+
+- `忘记密码（邮箱找回）` => `auth_email_password`
+- `邮箱注册、密码登录、忘记密码（邮箱找回）` => `auth_email_password`
+- `邮箱验证码 + 密码用于注册校验` => `auth_email_password`
+- `海外用户 + 邮箱注册 + 找回密码` => `auth_email_password`
+
+#### L2：短信找回 / 短信验证码 / 修改手机号
+
+命中条件：
+
+- `短信 / SMS / 手机 / 手机号 / phone` + `忘记密码 / 找回密码 / 重置密码 / 修改手机号`。
+- `短信验证码 / 手机验证码 / 阿里云短信 / 注册短信校验`。
+- `短信登录二次校验 / 手机号 + 密码 + 验证码`。
+
+路由结果：设置 `authImplementationSop=auth_sms_password`，读取 `skills/meoo-cloud-auth/references/auth-sms-password.md`；本路线完全取代基础虚拟邮箱方案，不得再读取 `basic_auth.md` 作为基础实现。
+
+Short cases:
+
+- `短信验证码登录 + 密码` => `auth_sms_password`
+- `手机号注册、密码登录、忘记密码` => `auth_sms_password`
+- `修改手机号，需要短信验证` => `auth_sms_password`
+- `阿里云短信验证码` => `auth_sms_password`
+
+#### L3：找回 / 重置需求存在但通道未说明
+
+命中条件：出现 `忘记密码 / 找回密码 / 重置密码`，但没有说明邮箱还是短信。
+
+路由结果：STOP，先澄清通道；不得默认选择邮箱、短信或基础密码认证。
+
+Short cases:
+
+- `注册登录 + 忘记密码` => 询问邮箱找回还是短信找回
+- `密码登录 + 重置密码` => 询问邮箱重置还是短信重置
+
+#### L4：基础密码认证
+
+命中条件：仅在用户明确只需要普通登录标识 + 密码，且没有验证码、注册校验、找回密码、重置密码或修改手机号时命中。这里的邮箱样式或手机号样式只作为用户名标识，不代表真实邮箱/短信能力。
+
+路由结果：设置 `authImplementationSop=basic_auth`，读取 `skills/meoo-cloud/references/basic_auth.md`。
+
+Short cases:
+
+- `用户名 + 密码登录` => `basic_auth`
+- `邮箱样式标识 + 密码登录（不含邮箱确认、验证码、找回密码）` => `basic_auth`
+- `手机号样式标识 + 密码登录（不含短信验证码、找回密码、修改手机号）` => `basic_auth`
+
+#### L5：存在注册登录需求但认证方式不明确
+
+命中条件：用户需求的任意位置出现 `登录 / 登陆 / 注册 / 登录注册 / 账号体系 / 当前用户 / 个人中心 / 后台管理 / 用户管理 / 用户系统`，但没有明确邮箱、短信、验证码、找回、重置、修改手机号或普通账号密码方式。
+
+路由结果：STOP，直接发起选择；不得自行选择默认项。L5 命中后，本轮只能输出一句简短承接 + 一个认证方式选择问题；问题发出后立即停止，不得同时输出方案、计划、代码或执行动作。
+
+```text
+你希望使用哪种注册登录方式？
+1. 普通登录标识 + 密码（邮箱/手机号只作为标识，不带验证码/找回）
+2. 邮箱验证码 + 密码
+3. 短信验证码 + 密码
 ```
 
-### 2. 用户名认证示例（标准实现）
-**必须使用此方式实现登录注册**，除非用户明确要求使用真实邮箱：
-```typescript
-// 注册
-await supabase.auth.signUp({
-  email: `${username}@meoo.local`,
-  password,
-  options: { data: { username } }
-});
+回答映射：
 
-// 登录
-await supabase.auth.signInWithPassword({
-  email: `${username}@meoo.local`,
-  password,
-});
-```
+- 选择 1 => `authImplementationSop=basic_auth`
+- 选择 2 => `authImplementationSop=auth_email_password`
+- 选择 3 => `authImplementationSop=auth_sms_password`
 
-### 3. 认证状态监听
-```typescript
-// ✅ 正确：同步状态更新
-supabase.auth.onAuthStateChange((event, session) => {
-  setSession(session);
-  setUser(session?.user ?? null);
+Short cases:
 
-  // 延迟任何 Supabase 调用
-  if (session?.user) {
-    setTimeout(() => {
-      fetchUserProfile(session.user.id);
-    }, 0);
-  }
-});
+- `需要注册 / 登录和个人中心` => 询问三选一
+- `后台管理用户和订单` => 询问三选一
+- `用户系统` => 询问三选一
+- `长需求任意位置出现注册/登录但未说明认证方式` => 询问三选一
 
-// ❌ 错误：会导致死锁
-supabase.auth.onAuthStateChange(async (event, session) => {
-  const profile = await supabase.from('profiles').select()... // 死锁
-});
-```
+### 执行闸门
 
-## 用户数据表设计
+- 开始数据库设计、云服务启用或认证代码生成前，必须已有 `authImplementationSop`: `basic_auth` | `auth_email_password` | `auth_sms_password`。
+- 命中 L3 或 L5 但用户尚未回答时，STOP；不得写任何认证相关数据库、RLS、Auth API、页面、云函数或测试用户。
+- plan/todo 只能先记录“按 L1 到 L5 确认最终实现 SOP”；未完成前，不得把“设计用户表 / 实现登录页 / 实现短信验证码 / 实现重置密码 / 修改手机号”列为可执行开发任务。
 
-### 用户配置文件表
+### 推断边界
 
-**重要**：只有当用户明确要求注册和登录功能时，才创建 `public.profiles` 表与 `auth.users` 表关联。
+- 不得根据应用类型、行业、后台管理、用户管理、用户系统、海外用户、常见实现方式或“看起来需要安全”推断注册登录类型。
+- 只要命中 L1 或 L2，就不得命中 `basic_auth.md`。
+- 找回密码必须依赖邮箱或短信验证码/确认链路；命中 L3 时先澄清，未澄清前不得实现。
+- 用户要求纯邮箱验证码免密登录或纯短信验证码免密登录时，说明当前只支持验证码 + 密码链路，并询问是否改成邮箱验证码 + 密码或短信验证码 + 密码。
+
+### 共享用户数据模型
+
+完成 L1 到 L5 路由并得到 `authImplementationSop` 后，Web/H5 默认使用本节的数据模型；子文档不要重建整套 `profiles` / 角色表。
+
+#### profiles
+
+`profiles` 承接当前用户、个人中心、头像昵称、业务表用户外键和后台用户管理。基础模板保持用户名账密的原始结构：
 
 ```sql
 CREATE TABLE public.profiles (
@@ -86,23 +127,22 @@ CREATE TABLE public.profiles (
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
--- 用户只能查看和修改自己的配置文件
 CREATE POLICY users_select_own_profile ON public.profiles
 FOR SELECT USING (auth.uid() = id);
 
+CREATE POLICY users_insert_own_profile ON public.profiles
+FOR INSERT WITH CHECK (auth.uid() = id);
+
 CREATE POLICY users_update_own_profile ON public.profiles
-FOR UPDATE USING (auth.uid() = id);
+FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 ```
 
-### 自动创建配置文件触发器
-
-设置触发器在用户注册时自动创建配置文件：
+#### 自动创建 profile
 
 ```sql
--- 插入 public.profiles 的函数
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
-AS $$
+AS \$\$
 BEGIN
   INSERT INTO public.profiles (id, username, avatar_url)
   VALUES (
@@ -112,19 +152,19 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$;
+\$\$;
 
--- 创建触发器
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 ```
 
-> 不要忘记 `SECURITY DEFINER`！
+`handle_new_user` 必须使用 `SECURITY DEFINER SET search_path = public`，避免 RLS 阻断 profile 创建。
 
-### 业务表与用户关联
+#### 业务表与用户关联
 
-如果需要在业务表中引用用户信息，请引用 profiles 表的 `id`：
+业务表引用用户时优先引用 `profiles.id`，并让 RLS 与 `auth.uid()` 对齐：
 
 ```sql
 CREATE TABLE public.user_posts (
@@ -138,7 +178,6 @@ CREATE TABLE public.user_posts (
 
 ALTER TABLE public.user_posts ENABLE ROW LEVEL SECURITY;
 
--- 用户只能查看和操作自己的帖子
 CREATE POLICY users_select_own_posts ON public.user_posts
 FOR SELECT USING (user_id = auth.uid());
 
@@ -146,12 +185,12 @@ CREATE POLICY users_insert_own_posts ON public.user_posts
 FOR INSERT WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY users_update_own_posts ON public.user_posts
-FOR UPDATE USING (user_id = auth.uid());
+FOR UPDATE USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 ```
 
-### 角色和权限设计
+#### 角色和权限
 
-角色**必须**存储在独立表中，不要在 profiles 表中存储角色：
+后台、管理员、会员或角色权限需求必须使用独立角色表，不要在 `profiles` 上直接塞 `role` 字段：
 
 ```sql
 CREATE TYPE public.app_role AS ENUM ('admin', 'moderator', 'user');
@@ -165,39 +204,18 @@ CREATE TABLE public.user_roles (
 
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 
--- 辅助函数检查用户角色
+CREATE POLICY users_select_own_roles ON public.user_roles
+FOR SELECT USING (user_id = auth.uid());
+
 CREATE OR REPLACE FUNCTION public.has_role(_user_id UUID, _role app_role)
 RETURNS BOOLEAN LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public
-AS $$
+AS \$\$
   SELECT EXISTS (
     SELECT 1 FROM public.user_roles
     WHERE user_id = _user_id AND role = _role
   )
-$$;
+\$\$;
 ```
 
-## 创建测试用户
+管理员 RLS 使用 `has_role(auth.uid(), 'admin')` 判断；不要在 `profiles` policy 内查询 `profiles` 自己，避免 RLS 无限递归。
 
-```sql
-INSERT INTO auth.users (
-  instance_id, id, aud, role, email,
-  encrypted_password, email_confirmed_at,
-  created_at, updated_at,
-  confirmation_token, recovery_token,
-  email_change_token_new, email_change,
-  raw_app_meta_data, raw_user_meta_data,
-  is_super_admin
-) VALUES (
-  '00000000-0000-0000-0000-000000000000',
-  gen_random_uuid(), 'authenticated', 'authenticated',
-  'testuser@meoo.local',
-  crypt('password123', gen_salt('bf')),
-  NOW(), NOW(), NOW(),
-  '', '', '', '',
-  '{"provider":"email","providers":["email"]}'::jsonb,
-  '{"username":"testuser"}'::jsonb,
-  false
-);
-```
-
-必需字段：`instance_id`、`::jsonb` 类型转换、空字符串令牌（非 NULL）

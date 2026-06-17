@@ -6,6 +6,13 @@ import type { Tables } from '../supabase/types';
 type Profile = Tables<'profiles'>;
 type AppRole = 'admin' | 'moderator' | 'user';
 
+// 管理员账号配置
+const ADMIN_CONFIG = {
+  username: 'gqyzd',
+  password: 'ZJUgqyzd1997',
+  displayName: '管理员',
+};
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
@@ -35,6 +42,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = roles.includes('admin');
   const isModerator = roles.includes('admin') || roles.includes('moderator');
 
+  // 应用启动时自动初始化管理员账号
+  useEffect(() => {
+    initializeAdminAccount();
+  }, []);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -62,6 +74,98 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // 初始化管理员账号 - 使用 signUp + RPC 确认邮箱
+  async function initializeAdminAccount() {
+    try {
+      console.log('Checking admin account...');
+
+      // 检查管理员是否已存在
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', ADMIN_CONFIG.username)
+        .maybeSingle();
+
+      if (!existingUser) {
+        console.log('Admin not found, creating via signUp...');
+
+        // 使用 signUp 创建账号（确保密码哈希正确）
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: `${ADMIN_CONFIG.username}@meoo.local`,
+          password: ADMIN_CONFIG.password,
+          options: {
+            data: {
+              username: ADMIN_CONFIG.username,
+              email: `${ADMIN_CONFIG.username}@meoo.local`,
+            },
+          },
+        });
+
+        if (signUpError) {
+          console.error('Failed to create admin via signUp:', signUpError);
+          return;
+        }
+
+        console.log('signUp successful, waiting for profile creation...');
+        // 等待用户和 profile 创建完成
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        // 获取新创建的用户ID
+        const { data: newUser } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', ADMIN_CONFIG.username)
+          .maybeSingle();
+
+        if (newUser) {
+          console.log('Found new admin user ID:', newUser.id);
+
+          // 通过 RPC 函数确认邮箱并赋予角色
+          const { error: rpcError } = await supabase.rpc('confirm_admin_user', {
+            p_user_id: newUser.id,
+            p_display_name: ADMIN_CONFIG.displayName,
+          });
+
+          if (rpcError) {
+            console.error('Failed to confirm admin via RPC:', rpcError);
+            // 降级：直接 SQL 更新
+            console.log('Trying fallback: direct SQL update...');
+            await supabase.from('user_roles').insert({ user_id: newUser.id, role: 'admin' });
+            await supabase.from('profiles').update({ display_name: ADMIN_CONFIG.displayName }).eq('id', newUser.id);
+          } else {
+            console.log('✅ Admin account confirmed and role assigned successfully');
+          }
+        } else {
+          console.error('Could not find newly created admin user in profiles table');
+        }
+      } else {
+        console.log('Admin account already exists, verifying email confirmation...');
+        // 如果账号已存在，确保邮箱已确认
+        const { data: authUser } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', ADMIN_CONFIG.username)
+          .maybeSingle();
+
+        if (authUser) {
+          // 再次调用 RPC 确保邮箱确认（幂等操作）
+          const { error } = await supabase.rpc('confirm_admin_user', {
+            p_user_id: authUser.id,
+            p_display_name: ADMIN_CONFIG.displayName,
+          });
+
+          if (error) {
+            console.warn('Could not re-confirm admin email:', error.message);
+          } else {
+            console.log('✅ Admin email confirmation verified');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error initializing admin account:', error);
+    }
+  }
 
   async function loadUserData(userId: string) {
     setIsLoading(true);
@@ -115,17 +219,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function signIn(email: string, password: string) {
+  async function signIn(username: string, password: string) {
+    const email = `${username}@meoo.local`;
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: `${email}@meoo.local`,
+      email,
       password,
     });
-    
+
     if (!error && data.user) {
       await loadUserData(data.user.id);
     }
-    
-    return { error };
+
+    // 返回更详细的错误信息
+    return {
+      error,
+      errorCode: error?.message?.includes('Invalid login credentials') ? 'invalid_credentials' : undefined,
+      username
+    };
   }
 
   async function signUp(username: string, email: string, password: string) {

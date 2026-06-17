@@ -18,6 +18,9 @@
 - 确保 `user_id` 字段在 INSERT 时正确设置为 `auth.uid()`
 - 确保 `user_id` 字段不是 nullable（如果 RLS 策略依赖它）
 
+### 写操作"成功"但数据没写入
+RLS 拦截 INSERT/UPDATE/DELETE 时，`error` 为 `null`、仅返回空数组，前端容易误判为成功。写操作必须 `.insert(...).select()`，data 长度为 0 视为失败并检查 RLS 策略（详见 `database.md` 的"写操作必须校验影响行数"）。
+
 ### 无限递归错误
 RLS 策略直接引用同一表：
 ```sql

@@ -18,43 +18,15 @@ import {
   Calendar,
   MapPin,
   Tag,
+  Share2,
+  Check,
 } from 'lucide-react';
 
-// 图片URL验证和错误处理组件
+// 图片展示组件 - 仅支持 Meoo Cloud Storage
 function SafeImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
   const [error, setError] = useState(false);
 
-  // 验证是否为有效的图片URL
-  const isValidImageUrl = (url: string): boolean => {
-    if (!url) return false;
-    // 检查是否是数据URI
-    const isDataUri = url.startsWith('data:image/');
-    // 检查是否是有效的HTTP(S) URL
-    const isValidUrl = url.startsWith('http://') || url.startsWith('https://');
-    if (!isValidUrl && !isDataUri) return false;
-
-    // 数据URI直接通过
-    if (isDataUri) return true;
-
-    // 排除明显的非图片URL（网页路径）
-    const nonImagePatterns = /\.(html|htm|php|asp|jsp|json|xml|txt|js|css)(\?.*)?$/i;
-    if (nonImagePatterns.test(url)) return false;
-
-    // 排除以路径结尾的URL（如 /explore, /path）
-    // 但保留包含图片扩展名的URL
-    const hasImageExtension = /\.(jpg|jpeg|png|gif|webp|bmp|svg|ico)(\?.*)?$/i.test(url);
-
-    // 如果URL包含图片扩展名，直接通过
-    if (hasImageExtension) return true;
-
-    // 对于没有扩展名的URL（如图床链接），尝试加载
-    // 只要不是明显的非图片路径就允许
-    return true;
-  };
-
-  const validSrc = isValidImageUrl(src) ? src : '';
-
-  if (!validSrc || error) {
+  if (!src || error) {
     return (
       <div className={`${className} bg-gray-200 dark:bg-gray-700 flex items-center justify-center`}>
         <ImageIcon className="w-8 h-8 text-gray-400" />
@@ -64,7 +36,7 @@ function SafeImage({ src, alt, className }: { src: string; alt: string; classNam
 
   return (
     <img
-      src={validSrc}
+      src={src}
       alt={alt}
       className={className}
       loading="lazy"
@@ -102,6 +74,7 @@ export default function Gallery() {
   const [hasMore, setHasMore] = useState(true);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
+  const [copiedImageId, setCopiedImageId] = useState<string | null>(null);
 
   const ITEMS_PER_PAGE = 12;
 
@@ -266,6 +239,18 @@ export default function Gallery() {
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  async function handleCopyLink(imageId: string, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/#/image/${imageId}`);
+      setCopiedImageId(imageId);
+      setTimeout(() => setCopiedImageId(null), 2000);
+    } catch (error) {
+      console.error('复制失败:', error);
+    }
   }
 
   const hasActiveFilters = selectedCategory || selectedYear || selectedLocation || searchQuery;
@@ -574,6 +559,17 @@ export default function Gallery() {
                                 />
                               </button>
                             )}
+                            <button
+                              onClick={(e) => handleCopyLink(image.id, e)}
+                              className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                              title="复制链接"
+                            >
+                              {copiedImageId === image.id ? (
+                                <Check className="w-5 h-5 text-green-400" />
+                              ) : (
+                                <Share2 className="w-5 h-5 text-white" />
+                              )}
+                            </button>
                           </div>
                         </div>
                         <div className="flex items-center gap-4 mt-2 text-white/60 text-sm">
@@ -642,6 +638,17 @@ export default function Gallery() {
                           />
                         </button>
                       )}
+                      <button
+                        onClick={(e) => handleCopyLink(image.id, e)}
+                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        title="复制链接"
+                      >
+                        {copiedImageId === image.id ? (
+                          <Check className="w-5 h-5 text-green-600" />
+                        ) : (
+                          <Share2 className="w-5 h-5 text-gray-400" />
+                        )}
+                      </button>
                     </div>
                   </motion.div>
                 ))}

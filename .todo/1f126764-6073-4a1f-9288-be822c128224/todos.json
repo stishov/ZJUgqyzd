@@ -1,31 +1,13 @@
 [
   {
-    "content": "检查 Gallery 页面图片渲染逻辑",
+    "content": "在 AuthContext 中添加管理员账号自动初始化逻辑",
     "id": "1",
     "priority": "high",
     "status": "completed"
   },
   {
-    "content": "检查 ImageDetail 页面图片渲染逻辑",
+    "content": "验证管理员账号自动创建功能",
     "id": "2",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "检查数据库中图片URL存储情况",
-    "id": "3",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "修复外部图床图片显示问题",
-    "id": "4",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "验证修复结果",
-    "id": "5",
     "priority": "medium",
     "status": "completed"
   }

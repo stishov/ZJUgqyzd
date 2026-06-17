@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
 - `SUPABASE_SERVICE_ROLE_KEY` — 服务角色密钥（保密）
 - `SUPABASE_DB_URL` — PostgreSQL 连接 URL
 
-**自定义变量**：项目可能配置了额外的密钥。使用 `meoo-cli cloud list-functions` 查看完整的环境变量列表。
+**自定义变量**：项目可能配置了额外的密钥。使用 `meoo-cli cloud list-functions` 查看完整的环境变量列表；如需新增或更新变量，使用 `meoo-cli cloud set-secret --name VARIABLE_NAME` 打开配置卡片填写 Secret 值；批量配置可用 `--name A --name B` 或 `--names A,B`。如需删除变量，使用 `meoo-cli cloud delete-secret --name VARIABLE_NAME` 或 `meoo-cli cloud secret delete --names A,B` 打开确认卡片，用户点击确认后执行删除。不要把 Secret 明文写进命令行、代码或对话。
 
 **重要**：只使用实际存在的环境变量，引用不存在的变量会导致运行时错误。
 
@@ -75,8 +75,10 @@ const supabase = createClient(
 
 ## 前端调用
 
-**推荐使用 `fetch` 调用** — fetch 能提供完整的错误信息和更好的调试能力，非必要不建议使用 sdk invoke 调用。
-**注意**：必须通过友好的 Toast 交互提醒用户数据操作结果，特别是操作失败的情况。
+通过友好的 Toast 交互提醒用户数据操作结果，尤其是失败场景。
+
+
+用 `fetch` 配合 `getSupabaseUrl()` 调用。如果函数需要用户身份，**必须**手动附加 `Authorization` header；流式响应直接读取 `response.body` 的 ReadableStream。
 
 ```typescript
 import { supabase, getSupabaseUrl } from 'src/supabase/client.ts';
@@ -85,7 +87,6 @@ import { supabase, getSupabaseUrl } from 'src/supabase/client.ts';
 const session = (await supabase.auth.getSession()).data.session;
 const authHeaders = session ? { Authorization: `Bearer ${session.access_token}` } : {};
 
-// 基本函数调用
 const response = await fetch(`${getSupabaseUrl()}/functions/v1/hello-world`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json', ...authHeaders },
@@ -98,7 +99,8 @@ if (!response.ok) {
 }
 ```
 
-> 使用 `fetch` 时，如果函数需要用户身份，**必须**手动附加 `Authorization` header。
+
+
 
 ## 部署管理
 
