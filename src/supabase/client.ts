@@ -7,12 +7,13 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 export function getSupabaseUrl(): string {
-  // 使用固定的云服务 URL，确保跨设备访问一致
+  // 优先使用 MEOO_CONFIG（Meoo 平台注入）
   const configUrl = (window as any).MEOO_CONFIG?.meoo_app_access_url;
   if (configUrl) {
     return `${configUrl}/sb-api`;
   }
-  // 默认使用 Meoo Cloud 的固定地址
+
+  // 固定使用当前云服务地址，确保所有环境都能访问同一数据库
   return 'https://afp2yuczys3x.meoo.host/sb-api';
 }
 

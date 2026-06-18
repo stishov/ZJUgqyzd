@@ -1,10 +1,13 @@
 {
+  "homepage": "https://stishov.github.io/ZJUgqyzd",
   "name": "zju-guard-gallery",
   "version": "1.0.0",
   "scripts": {
     "dev": "webpack serve",
     "build": "webpack --mode production",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"  
   },
   "dependencies": {
     "react": "^18.2.0",
