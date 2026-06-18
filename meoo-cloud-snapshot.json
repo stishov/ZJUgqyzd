@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "collectedAt": "2026-06-18T13:30:40.610Z",
+  "secretNames": [
+    "MEOO_PROJECT_API_KEY",
+    "SUPABASE_ANON_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "SUPABASE_DB_URL",
+    "SUPABASE_URL",
+    "SUPABASE_PUBLIC_URL"
+  ],
+  "hasDatabase": true
+}
